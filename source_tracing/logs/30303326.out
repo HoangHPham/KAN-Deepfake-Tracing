@@ -1,0 +1,21 @@
+Number of batches in train loader: 3054
+Number of batches in dev loader: 764
+Using device: cuda
+Pretrained weights are loaded for SSLAASIST backbone
+Adding modular structure for KAN
+no. model params:318032412
+Backbone architecture:  SSLAASIST
+use_pretrained_backbone: True
+freeze_backbone: False
+Traceback (most recent call last):
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/train.py", line 471, in <module>
+    main(parser.parse_args())
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/train.py", line 113, in main
+    model.load_state_dict(torch.load(train_config['pretrained_ppm_path'], map_location=device))
+  File "/scratch/project_2006687/hoangph/.venv39/lib/python3.9/site-packages/torch/serialization.py", line 1479, in load
+    with _open_file_like(f, "rb") as opened_file:
+  File "/scratch/project_2006687/hoangph/.venv39/lib/python3.9/site-packages/torch/serialization.py", line 759, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "/scratch/project_2006687/hoangph/.venv39/lib/python3.9/site-packages/torch/serialization.py", line 740, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: './weights/best_ST_RB_SSLAASIST_MTL_KANaux_fullFinetuning_1st50ep'

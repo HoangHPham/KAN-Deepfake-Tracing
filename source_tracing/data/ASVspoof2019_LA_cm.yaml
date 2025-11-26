@@ -1,0 +1,8 @@
+
+train_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/LA/ASVspoof2019_LA_train
+dev_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/LA/ASVspoof2019_LA_dev
+eval_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/LA/ASVspoof2019_LA_eval
+
+train_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt
+dev_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt
+eval_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt

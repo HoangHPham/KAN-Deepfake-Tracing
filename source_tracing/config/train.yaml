@@ -1,0 +1,28 @@
+# initialization
+seed: 42
+cudnn_deterministic_toggle: True
+cudnn_benchmark_toggle: False
+
+# hyper-parameters
+n_epochs: 100
+batch_size: 16
+learning_rate: 0.0001
+weight_decay: 0.0001
+betas: [0.9, 0.999]
+amsgrad: False
+
+# model config
+backbone: AASIST
+use_pretrained_backbone: True
+freeze_backbone: True
+use_kan_auxiliary_structure: False
+
+# Resume pretrained weights
+resume: False
+pretrained_ppm_path: # pretrained proposed model path
+
+# data pre-processing
+trim_silence: True
+
+# training name
+exp_name: ST_RB_AASIST_MTL_KAN_partialFinetuning

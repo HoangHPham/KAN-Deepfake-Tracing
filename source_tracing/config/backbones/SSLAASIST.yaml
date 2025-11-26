@@ -1,0 +1,3 @@
+architecture: SSLAASIST
+use_pretrained_ssl: True
+pretrained_weights_path: ./backbones/pretrained_weights/SSLAASIST_ST_RB_0.2852.pt

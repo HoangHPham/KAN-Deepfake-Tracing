@@ -1,0 +1,18 @@
+
+# initialization
+seed: 42
+cudnn_deterministic_toggle: True
+cudnn_benchmark_toggle: False
+
+#hyper-parameters
+batch_size: 16
+
+# model config
+backbone: AASIST
+use_pretrained_backbone: False
+freeze_backbone: False
+use_kan_auxiliary_structure: False
+pretrained_weights_path: ./weights/best_ST_RB_AASIST_MTL_KAN_partialFinetuning.pt
+
+# data pre-processing
+trim_silence: True

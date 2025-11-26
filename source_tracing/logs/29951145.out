@@ -1,0 +1,22 @@
+Number of batches in train loader: 3054
+Number of batches in dev loader: 764
+Using device: cuda
+Traceback (most recent call last):
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/train.py", line 473, in <module>
+    main(parser.parse_args())
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/train.py", line 97, in main
+    model = CMMTLKAN(
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/model.py", line 86, in __init__
+    self.backbone_module = self.get_backbone_module(backbone_config=backbone_config, 
+  File "/scratch/project_2006687/hoangph/_thesis/ppm_v4/source_tracing/model.py", line 120, in get_backbone_module
+    model.load_state_dict(torch.load(backbone_config["pretrained_weights_path"], map_location="cpu"))
+  File "/scratch/project_2006687/hoangph/.venv39/lib/python3.9/site-packages/torch/nn/modules/module.py", line 2593, in load_state_dict
+    raise RuntimeError(
+RuntimeError: Error(s) in loading state_dict for SSLAASIST:
+	Missing key(s) in state_dict: "ssl_model.model.feature_extractor.conv_layers.0.2.weight", "ssl_model.model.feature_extractor.conv_layers.0.2.bias". 
+	Unexpected key(s) in state_dict: "ssl_model.model.quantizer.vars", "ssl_model.model.quantizer.weight_proj.weight", "ssl_model.model.quantizer.weight_proj.bias", "ssl_model.model.feature_extractor.conv_layers.0.0.bias", "ssl_model.model.feature_extractor.conv_layers.0.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.0.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.1.0.bias", "ssl_model.model.feature_extractor.conv_layers.1.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.1.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.2.0.bias", "ssl_model.model.feature_extractor.conv_layers.2.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.2.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.3.0.bias", "ssl_model.model.feature_extractor.conv_layers.3.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.3.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.4.0.bias", "ssl_model.model.feature_extractor.conv_layers.4.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.4.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.5.0.bias", "ssl_model.model.feature_extractor.conv_layers.5.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.5.2.1.bias", "ssl_model.model.feature_extractor.conv_layers.6.0.bias", "ssl_model.model.feature_extractor.conv_layers.6.2.1.weight", "ssl_model.model.feature_extractor.conv_layers.6.2.1.bias". 
+	size mismatch for ssl_model.model.feature_extractor.conv_layers.5.0.weight: copying a param with shape torch.Size([512, 512, 2]) from checkpoint, the shape in current model is torch.Size([512, 512, 3]).
+	size mismatch for ssl_model.model.project_q.weight: copying a param with shape torch.Size([768, 768]) from checkpoint, the shape in current model is torch.Size([1024, 512]).
+	size mismatch for ssl_model.model.project_q.bias: copying a param with shape torch.Size([768]) from checkpoint, the shape in current model is torch.Size([1024]).
+	size mismatch for ssl_model.model.final_proj.weight: copying a param with shape torch.Size([768, 1024]) from checkpoint, the shape in current model is torch.Size([1024, 1024]).
+	size mismatch for ssl_model.model.final_proj.bias: copying a param with shape torch.Size([768]) from checkpoint, the shape in current model is torch.Size([1024]).
