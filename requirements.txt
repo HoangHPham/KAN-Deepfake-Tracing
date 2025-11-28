@@ -1,0 +1,17 @@
+torch
+torchvision
+torchaudio
+
+librosa
+
+numpy
+scipy
+pandas
+scikit-learn
+
+matplotlib
+seaborn
+
+yaml
+pickle
+tqdm
