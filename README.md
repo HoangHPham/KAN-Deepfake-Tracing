@@ -60,6 +60,36 @@ Table 2: Performance of OOD detection.
 
 ## Quick Start 🚀
 
+### 1. Install Dependencies
+
+```
+git clone https://github.com/HoangHPham/KAN-Deepfake-Tracing.git
+conda create -n sourceTracing python=3.12
+conda activate sourceTracing
+pip install -r requirements.txt
+```
+
+### 2. Training 
+
+### 3. Validation
+
+#### 3.1. Source tracing tasks
+
+#### 3.2. Interpretability
+
+#### 3.3. OOD detection
+
+## Acknowledgements
+Very thanks to authors who have foundations for my research:
+1. [Official AASIST by @clovaai](https://github.com/clovaai/aasist)
+2. [Official SSL-AASIST by @TakHemlata](https://github.com/TakHemlata/SSL_Anti-spoofing/tree/main)
+3. [Baseline source tracing model by @Manasi2001](https://github.com/Manasi2001/Spoofed-Speech-Attribution)
+
+
+
+
+
+
 
 
 
