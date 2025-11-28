@@ -40,10 +40,23 @@
 ## Main Results 🏆
 
 ### Experiment 1: Source tracing performance
+Table 1: Performance of our proposed source tracing model on ASVspoof2019-attr-17 protocol of ASVspoof 2019 LA dataset. 
+![exp_res_proposed_model](assets/exp_res_proposed_model.png)
 
 ### Experiment 2: Interpretability validation
 
+#### Intrinsic interpretability
+A visualization of structured KAN module that presents the relations between attack attributes and attack types in ASVspoof 2019 LA dataset.
+![visualization_SKM](assets/visualization_SKM.png)
+
+#### Extrinsic interpretability
+A bar plot shows the global importance scores of each attack attribute that affects the performance of attack type classification.
+
+![global_FI_ranks_model_level](assets/global_FI_ranks_model_level.png)
+
 ### Experiment 3: Adaptability to deepfake detection
+Table 2: Performance of OOD detection. 
+![exp_res_ood_detection](assets/exp_res_ood_detection.png)
 
 ## Quick Start 🚀
 
