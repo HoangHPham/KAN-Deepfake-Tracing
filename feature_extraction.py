@@ -6,6 +6,7 @@ import numpy as np
 import yaml
 
 import warnings
+import argparse
 
 from tqdm.auto import tqdm
 
@@ -248,14 +249,29 @@ def extract_ASVspoof2019_attr2_full_bonafide(save_folder=None):
 
 if __name__ == "__main__":
     
-    exp_name = 'ST_RB_AASIST_MTL_KANaux_trainingScratch_seed42_bs64'
+    parser = argparse.ArgumentParser(description="ASVspoof2019-attr17 source tracing training")
+
+    parser.add_argument('--prot-attr17', type=bool, default=True, 
+                    help='Whether to use ASVspoof2019-attr17 protocol. [default=True]')
+
+    parser.add_argument('--phase', type=str, default='eval', 
+                    help='Phase to extract embeddings for ASVspoof2019_attr17. Options: train, dev, eval. [default=eval]')
     
+    parser.add_argument('--exp-name', type=str, default='ST_RB_AASIST_MTL_KANaux_trainingScratch')
+    
+    args = parser.parse_args()
+    
+    exp_name = args.exp_name
+
     save_folder = os.path.join('./extracted_embds', exp_name)
     os.makedirs(save_folder, exist_ok=True)
     
-    # extract_ASVspoof2019_attr17_phase(save_folder=save_folder, phase='train')
-    # extract_ASVspoof2019_attr17_phase(save_folder=save_folder, phase='dev')
-    extract_ASVspoof2019_attr17_phase(save_folder=save_folder, phase='eval')
     
-    
-    # extract_ASVspoof2019_attr2_full_bonafide(save_folder=save_folder)
+    if args.prot_attr17:
+        phase = args.phase
+        print(f"Extracting embeddings for ASVspoof2019_attr17 {phase} phase...")
+
+        extract_ASVspoof2019_attr17_phase(save_folder=save_folder, phase=phase)
+        
+    else: # extract full bonafide embeddings for ASVspoof2019-attr2
+        extract_ASVspoof2019_attr2_full_bonafide(save_folder=save_folder)
