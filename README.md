@@ -4,6 +4,7 @@
 
 ## Updates
 
+- 2025/11/29: Complete experiments relating to Interpretability are online.
 - 2025/11/27: The official implementation has been open-sourced.
 
 ## Table of Contents
@@ -147,7 +148,7 @@ python evaluation.py
 
 ### 5. Interpretability
 
-🔥 **Note:** Complete experiments relating to interpretability are provided in `./Interpretability.ipynb`. Following sub-sections are only quick guides. 
+🔥 **Note:** Complete experiments relating to interpretability are provided in `./experiments/Interpretability.ipynb`. Following sub-sections are only quick guides. 
 
 #### 5.1. Intrinsic interpretability
 
@@ -232,9 +233,27 @@ feature_scores = kan_model.attribute(1, 0)
 ```
 
 #### 5.3. Feature importance validation
-🔥 For experiments relating to evaluation of feature importance results, full implementations can be reproducible using `./Interpretability.ipynb`.
+🔥 For experiments relating to evaluation of feature importance results, full implementations can be reproducible using `./experiments/Interpretability.ipynb`.
 
 ### 6. OOD detection
+
+* Step 1: Extract embeddings
+  * OOD detection problems require three kinds of samples: (1) train in-distribution (spoofed), (2) dev/test in-distribution (spoofed), and (3) test out-of-distribution (bonafide). Each kind consists of 2 types of embeddings: (1) attack attribute embeddings (50-d) and (2) attack classification embeddings.
+  * Embeddings for in-distribution samples can be extracted:
+  ``` code
+  python feature_extraction.py --prot-attr17 True --phase train --exp-name <saved-folder>
+  python feature_extraction.py --prot-attr17 True --phase dev --exp-name <saved-folder>
+  python feature_extraction.py --prot-attr17 True --phase eval --exp-name <saved-folder>
+  ```
+  * Embeddings for out-of-distribution can be extracted:
+  ``` code
+  python feature_extraction.py --prot-attr17 False --exp-name <saved-folder>
+  ```
+* Step 2: Run OOD detection algorithms
+  * 🔥 **Note:** Investigate `./evaluate_deepfake_detection.py` to manually config which embeddings are used for OOD detection algorithms.
+  ``` code
+  python evaluate_deepfake_detection.py
+  ```
 
 ### 7. Additional experiments
 
