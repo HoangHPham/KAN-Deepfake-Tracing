@@ -250,7 +250,37 @@ feature_scores = kan_model.attribute(1, 0)
   python feature_extraction.py --prot-attr17 False --exp-name <saved-folder>
   ```
 * Step 2: Run OOD detection algorithms
-  * 🔥 **Note:** Investigate `./evaluate_deepfake_detection.py` to manually config which embeddings are used for OOD detection algorithms.
+  * 🔥 **Note:** Investigate `./evaluate_deepfake_detection.py` to manually config hyper-parameters (`k` and `M`), and which embeddings are used to evaluate performance of OOD detection algorithms.
+  ``` code
+  #### AttackAttr embeddings (50-d features)
+  ASVspoof2019_attr17_train_attackAttr_embds_path = 'ASVspoof2019_attr17_train_attackAttr_embeddings.npy' # train-id
+  ASVspoof2019_attr17_dev_attackAttr_embds_path = 'ASVspoof2019_attr17_dev_attackAttr_embeddings.npy' # dev/test-id
+  ASVspoof2019_attr17_eval_attackAttr_embds_path = 'ASVspoof2019_attr17_eval_attackAttr_embeddings.npy' # dev/test-id
+  ASVspoof2019_attr2_full_bonafide_attackAttr_embds_path = 'ASVspoof2019_attr2_full_bonafide_attackAttr_embeddings.npy' # test-ood
+  
+  #### AttackCls embeddings (17-d features)
+  ASVspoof2019_attr17_train_attackCls_embds_path = 'ASVspoof2019_attr17_train_attackCls_embeddings.npy' # train-id
+  ASVspoof2019_attr17_dev_attackCls_embds_path = 'ASVspoof2019_attr17_dev_attackCls_embeddings.npy' # dev/test-id
+  ASVspoof2019_attr17_eval_attackCls_embds_path = 'ASVspoof2019_attr17_eval_attackCls_embeddings.npy' # dev/test-id
+  ASVspoof2019_attr2_full_bonafide_attackCls_embds_path = 'ASVspoof2019_attr2_full_bonafide_attackCls_embeddings.npy' # test-ood
+  ```
+  ``` code
+  # OOD detection using Deep-KNN (Distance-based algorithm)
+  deep_knn_scores(
+      train_embeds_path=<path-to-train-id-embeddings>,
+      id_embeds_path=<path-to-dev/test-id-embeddings>,
+      ood_embeds_path=<path-to-test-ood-embeddings>,
+      k=<#neighbors-in-kNN>)
+    
+  # OOD detection using KNN-indegree (Indegree-based algorithm)
+  knn_indegree_scores(
+      train_embeds_path=<path-to-train-id-embeddings>,
+      id_embeds_path=<path-to-dev/test-id-embeddings>,
+      ood_embeds_path=<path-to-test-ood-embeddings>,
+      k=<#neighbors-in-kNN>,
+      M=<#candidates-in-RkNN>)
+  ```
+  * Then, to run an evaluation:
   ``` code
   python evaluate_deepfake_detection.py
   ```
