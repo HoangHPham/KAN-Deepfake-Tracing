@@ -140,7 +140,99 @@ pretrained_weights_path: <path to trained weights>
 # ...
 ```
 
+- To run an evaluation:
+``` code
+python evaluation.py
+```
+
 ### 5. Interpretability
+
+🔥 **Note:** Complete experiments relating to interpretability are provided in `./Interpretability.ipynb`. Following sub-sections are only quick guides. 
+
+#### 5.1. Intrinsic interpretability
+
+To visualize the intrinsic structure of KAN module (SKM) that is intergrated with auxiliary tree structure from metadata of ASVspoof 2019 LA dataset:
+
+* Step 1: Get SKM from trained proposed model
+  * **Note:** To ensure that it is possible to feed the entire evaluation set as a single batch (global inference) into the SKM, it is required to extract attack attribute embeddings from MTL module first and then feed these embeddings into SKM.
+  * Step 1.1: Extract attack attribute embeddings
+  ``` code
+  python feature_extraction.py --prot-attr17 True --phase eval --exp-name <saved-folder>
+  ```   
+  * Step 1.2: Get SKM architecture
+  ``` code
+  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+  pretrained_path = "./weights/best.pt"
+  model = CMMTLKAN(
+                  backbone="AASIST", # or SSLAASIST
+                  use_pretrained_backbone=False,
+                  freeze_backbone=False,
+                  device=device, 
+                  kan_auxiliary_structure=ASVSpoof2019_Attr17_attack_attribute_structure,
+                  seed=42
+              ).to(device)
+  model.load_state_dict(torch.load(pretrained_path, map_location=device))
+
+  kan_module = model.kan_module
+  kan_module.to(device)
+  ```
+  * Step 1.3: Feed embeddings extracted in step 1.1 into SKM as a single batch
+  ``` code
+  from data_utils import ASVSpoof2019_Attr17_attack_attribute_structure
+  from model import CMMTLKAN
+  from FI_utils import *
+  ```
+  ``` code
+  embds_folder = "./extracted_embds"
+  exp_name = <saved-folder>
+  exp_folder = os.path.join(embds_folder, exp_name)
+  eval_attackAttr_embeddings_file = "ASVspoof2019_attr17_eval_attackAttr_embeddings.npy"
+  eval_attackAttr_embeddings_path = os.path.join(exp_folder, eval_attackAttr_embeddings_file)
+
+  eval_attackAttr_embeddings = np.load(eval_attackAttr_embeddings_path)
+  eval_protocols_path = './data/ASVspoof2019_attr17_cm_protocols/Eval_ASVspoof19_attr17.txt'
+  eval_attack_labels = load_attack_labels(eval_protocols_path)
+
+  eval_dataset = AttClsDataset(eval_attackAttr_embeddings, eval_attack_labels)
+
+  eval_loader = DataLoader(eval_dataset,
+                             batch_size=len(eval_dataset),
+                             shuffle=False,
+                             drop_last=False,
+                             pin_memory=True,
+                             collate_fn=None,
+                             num_workers=4)
+  
+  eval_avg_acc, eval_avg_balanced_acc, attCls_cfsMatrix, attCls_clsReport = eval_AttackCls(eval_loader, kan_module, device)
+  ```
+* Step 2: Visualize tree structure of SKM
+``` code
+in_vars=["Text (inputs)", "Speech_human (inputs)", "Speech_TTS (inputs)",
+         "NLP (processor)", "WORLD (processor)", "LPCC/MFCC (processor)", "CNN+bi-RNN (processor)", "ASR (processor)", "MFCC/i-vector (processor)",
+         "HMM (duration)", "FF (duration)", "RNN (duration)", "Attention (duration)", "DTW (duration)", "None (duration)", 
+         "AR-RNN (conversion)", "FF (conversion)", "CART (conversion)", "VAE (conversion)", "GMM-UBM (conversion)", "RNN (conversion)", "AR-RNN+CNN (conversion)", "Moment-match (conversion)", "linear (conversion)",
+         "VAE (speaker)", "one-hot (speaker)", "d-vector_RNN (speaker)", "PLDA (speaker)", "None (speaker)", 
+         "MCC-F0 (outputs)", "MCC-F0-BAP (outputs)", "MFCC-F0 (outputs)", "MCC-F0-AP (outputs)", "LPC (outputs)", "MCC-F0-BA (outputs)", "mel-spec (outputs)", "F0+ling (outputs)", "MCC (outputs)", "MFCC (outputs)",
+         "WaveNet (waveform)", "WORLD (waveform)", "Concat (waveform)", "SpecFiltOLA (waveform)", "NeuralFilt (waveform)", "Vocaine (waveform)", "WaveRNN (waveform)", "GriffinLim (waveform)", "WaveFilt (waveform)", "STRAIGHT (waveform)", "MFCCvoc (waveform)"
+        ]
+out_vars=['A01', 'A02', 'A03', 'A04-16', 'A05', 'A06-19', 'A07', 'A08', 'A09', 'A10', 'A11', 'A12', 'A13', 'A14', 'A15', 'A17', 'A18']
+
+kan_module.plot(beta=3, scale=1, varscale=0.2, in_vars=in_vars, out_vars=out_vars)
+```
+
+#### 5.2. Extrinsic interpretability
+
+* At the model level, to get importance scores for input features of structured KAN module (SKM), use `kan_module.feature_score` attribution of KAN:
+``` code
+feature_scores = kan_module.feature_score
+```
+* At the per-class level, to get importance scores for input features corresponding to a specific output in structured KAN module (SKM), use `kan_model.attribute(1, outNode_id)` function, where `outNode_id` ranges from 0 to 16 (17 attack types). For example, to get important scores of attributes in attack type A01:
+``` code
+feature_scores = kan_model.attribute(1, 0)
+```
+
+#### 5.3. Feature importance validation
+🔥 For experiments relating to evaluation of feature importance results, full implementations can be reproducible using `./Interpretability.ipynb`.
 
 ### 6. OOD detection
 
