@@ -9,12 +9,19 @@
 
 ## Table of Contents
 
-- [Technical Briefing 💡](#)
-- [Main Results 🏆](#)
-  - [1. Source tracing tasks](#)
-  - [2. Interpretability validation](#)
-  - [3. Adaptability to deepfake detection](#)
-- [Quick Start 🚀](#)
+- [Technical Briefing 💡](#technical-briefing-)
+- [Main Results 🏆](#main-results-)
+  - [Experiment 1: Source tracing performance](#experiment-1-source-tracing-performance)
+  - [Experiment 2: Interpretability](#experiment-2-interpretability)
+  - [Experiment 3: Adaptability to deepfake detection](#experiment-3-adaptability-to-deepfake-detection)
+- [Quick Start 🚀](#quick-start-)
+  - [1. Install Dependencies](#1-install-dependencies)
+  - [2. Data preparation](#2-data-preparation)
+  - [3. Training](#3-training)
+  - [4. Validation](#4-validation)
+  - [5. Interpretability](#5-interpretability)
+  - [6. OOD detection](#6-ood-detection)
+  - [7. Additional experiments](#7-additional-experiments)
 
 ## Technical Briefing 💡
 
@@ -44,14 +51,14 @@
 Table 1: Performance of our proposed source tracing model on ASVspoof2019-attr-17 protocol of ASVspoof 2019 LA dataset. 
 ![exp_res_proposed_model](assets/exp_res_proposed_model.png)
 
-### Experiment 2: Interpretability validation
+### Experiment 2: Interpretability
 
 #### Intrinsic interpretability
-A visualization of structured KAN module that presents the relations between attack attributes and attack types in ASVspoof 2019 LA dataset.
+Figure 1: A visualization of structured KAN module that presents the relations between attack attributes and attack types in ASVspoof 2019 LA dataset.
 ![visualization_SKM](assets/visualization_SKM.png)
 
 #### Extrinsic interpretability
-A bar plot shows the global importance scores of each attack attribute that affects the performance of attack type classification.
+Figure 2: A bar plot shows the global importance scores of each attack attribute that affects the performance of attack type classification.
 
 ![global_FI_ranks_model_level](assets/global_FI_ranks_model_level.png)
 
@@ -286,10 +293,13 @@ feature_scores = kan_model.attribute(1, 0)
   ```
 
 ### 7. Additional experiments
-
-### 7.1. Baseline models
-
-### 7.2. Ablations
+Two ablation experiments and a baseline model are also evaluated to present the necessity of components in proposed model:
+* Baseline model:
+  * The evaluation of baseline model follows the previous study (more instructions at [Spoofed-Speech-Attribution](https://github.com/Manasi2001/Spoofed-Speech-Attribution)) and reproduced for comparisons in `./_evaluate_baseline_model` folder.
+* Ablation studies:
+  * The first ablation experiment that evaluates the effect of multi-task learning (MTL) module is implemented at `./wo_MTL` folder. 
+  * The second ablation experiment that evaluates the effect of KAN module is implemented at `./wo_KAN` folder. 
+  * 🔥 **Note:** The running configurations of these ablation experiments are based on implementations of proposed method and baseline method. Feel free to investigate. 
 
 ## Acknowledgements
 Very thanks to authors who have foundations for my implementations:
