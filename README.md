@@ -64,26 +64,99 @@ Table 2: Performance of OOD detection.
 
 ```
 git clone https://github.com/HoangHPham/KAN-Deepfake-Tracing.git
+cd KAN-Deepfake-Tracing
 conda create -n sourceTracing python=3.12
 conda activate sourceTracing
 pip install -r requirements.txt
 ```
 
-### 2. Training 
+### 2. Data preparation 
 
-### 3. Validation
+- Download **ASVspoof 2019 LA dataset** at [ASVspoof2019](https://datashare.ed.ac.uk/handle/10283/3336).
+- Two data protocols, i.e., **ASVspoof2019-attr-2** and **ASVspoof2019-attr-17**, are available at `./data`.
+- 🔥 Modify data paths in configurations files:
 
-#### 3.1. Source tracing tasks
+`./data/ASVspoof2019_LA_cm.yaml`
+``` code
+# ASVspoof2019-attr-2 protocol
+train_dataset_path: <DATADIR>/asvspoof2019/LA/ASVspoof2019_LA_train
+dev_dataset_path: <DATADIR>/asvspoof2019/LA/ASVspoof2019_LA_dev
+eval_dataset_path: <DATADIR>/asvspoof2019/LA/ASVspoof2019_LA_eval 
 
-#### 3.2. Interpretability
+train_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.train.trn.txt
+dev_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.dev.trl.txt
+eval_protocol_path: ./data/ASVspoof2019_LA_cm_protocols/ASVspoof2019.LA.cm.eval.trl.txt
+```
 
-#### 3.3. OOD detection
+`./data/ASVspoof2019_attr17_cm.yaml`
+``` code
+# ASVspoof2019-attr-17 protocol
+train_dataset_path: <DATADIR>/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_train
+dev_dataset_path: <DATADIR>/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_dev
+eval_dataset_path: <DATADIR>/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_eval
+
+train_protocol_path: ./data/ASVspoof2019_attr17_cm_protocols/Train_ASVspoof19_attr17.txt 
+dev_protocol_path: ./data/ASVspoof2019_attr17_cm_protocols/Dev_ASVspoof19_attr17.txt
+eval_protocol_path: ./data/ASVspoof2019_attr17_cm_protocols/Eval_ASVspoof19_attr17.txt 
+```
+
+- For data pre-processing, both silence trimming and RawBoost augmentation are used as default. See `./data_utils.py` for more details. 
+
+### 3. Training
+
+- 🔥 Modify hyper-parameters in `./config/train.yaml`. Some importances:
+
+``` code
+# model config
+backbone: # AASIST or SSLAASIST
+use_pretrained_backbone: # True if using pretrained weights for backbone
+freeze_backbone: # True if freezing backbone
+use_kan_auxiliary_structure: # True if using auxiliary structure for KAN module
+
+# Resume pretrained weights
+resume: # True if training from a pretrained weights
+pretrained_ppm_path: # requiring a path for pretrained proposed model if resume=True
+
+# data pre-processing
+trim_silence: # True if trimming silence segments in input audio 
+```
+
+- 🔥 **Note:** if `use_pretrained_backbone=True`, pretrained weights of backbone are required. [AASIST](https://github.com/clovaai/aasist) or [SSL-AASIST](https://github.com/TakHemlata/SSL_Anti-spoofing) should be trained first for deepfake detection task to get the pretrained weights. 
+
+- To run a training:
+``` code
+python train.py
+```
+
+### 4. Validation
+
+- 🔥 Modify hyper-parameters in `./config/evaluate.yaml` (most are similar to training configurations):
+
+``` code
+# model config
+...
+pretrained_weights_path: <path to trained weights>
+
+# ...
+```
+
+### 5. Interpretability
+
+### 6. OOD detection
+
+### 7. Additional experiments
+
+### 7.1. Baseline models
+
+### 7.2. Ablations
 
 ## Acknowledgements
-Very thanks to authors who have foundations for my research:
+Very thanks to authors who have foundations for my implementations:
 1. [Official AASIST by @clovaai](https://github.com/clovaai/aasist)
-2. [Official SSL-AASIST by @TakHemlata](https://github.com/TakHemlata/SSL_Anti-spoofing/tree/main)
-3. [Baseline source tracing model by @Manasi2001](https://github.com/Manasi2001/Spoofed-Speech-Attribution)
+2. [Official SSL-AASIST by @TakHemlata](https://github.com/TakHemlata/SSL_Anti-spoofing)
+3. [Official KAN by @KindXiaoming](https://github.com/KindXiaoming/pykan)
+4. [Baseline source tracing model by @Manasi2001](https://github.com/Manasi2001/Spoofed-Speech-Attribution)
+
 
 
 
