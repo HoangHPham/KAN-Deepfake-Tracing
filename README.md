@@ -4,7 +4,10 @@
 
 ## Updates
 
+- 2025/11/30: Model weights trained with ST_RB_AASIST_MTL_KANaux_trainingScratch configuration are released.
+
 - 2025/11/29: Complete experiments relating to Interpretability are online.
+
 - 2025/11/27: The official implementation has been open-sourced.
 
 ## Table of Contents

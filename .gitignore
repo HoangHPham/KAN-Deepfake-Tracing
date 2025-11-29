@@ -58,7 +58,7 @@ node_modules/
 # *.png
 *.jpg
 # *.ipynb
-*.pt
+# *.pt
 *.pth
 *.npy
 *.pkl
