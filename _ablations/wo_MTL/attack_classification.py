@@ -214,29 +214,6 @@ def devNeval_phase(loader, model, criterion, device):
     
     return avg_loss, avg_acc
     
-    
-    
-    
-    
-    
-    
-    
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

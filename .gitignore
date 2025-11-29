@@ -55,9 +55,9 @@ setup.txt
 
 node_modules/
 
-*.png
+# *.png
 *.jpg
-*.ipynb
+# *.ipynb
 *.pt
 *.pth
 *.npy

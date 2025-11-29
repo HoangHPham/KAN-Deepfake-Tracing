@@ -1,7 +1,7 @@
 
-train_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_train
-dev_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_dev
-eval_dataset_path: /scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_eval
+train_dataset_path: DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_train
+dev_dataset_path: DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_dev
+eval_dataset_path: DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_eval
 
 train_protocol_path: ./data/ASVspoof2019_attr17_cm_protocols/Train_ASVspoof19_attr17.txt  # 48878 audios
 dev_protocol_path: ./data/ASVspoof2019_attr17_cm_protocols/Dev_ASVspoof19_attr17.txt  # 12220 audios

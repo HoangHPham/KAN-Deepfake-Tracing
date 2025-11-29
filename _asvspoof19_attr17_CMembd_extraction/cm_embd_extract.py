@@ -72,11 +72,11 @@ def get_loader(
     dev_database_path = database_path / "ASVspoof2019_attr17_dev"
     eval_database_path = database_path / "ASVspoof2019_attr17_eval"
 
-    trn_list_path = "/scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Train_ASVspoof19_attr17.txt"
+    trn_list_path = "DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Train_ASVspoof19_attr17.txt"
 
-    dev_trial_path = "/scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Dev_ASVspoof19_attr17.txt"
-
-    eval_trial_path = "/scratch/project_2006687/hoangph/DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Eval_ASVspoof19_attr17.txt"
+    dev_trial_path = "DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Dev_ASVspoof19_attr17.txt"
+    
+    eval_trial_path = "DATA/asvspoof2019/asvspoof2019_attr17/ASVspoof2019_attr17_cm_protocols/Eval_ASVspoof19_attr17.txt"
 
     d_label_trn, file_train = genSpoof_list(dir_meta=trn_list_path,
                                             is_train=True,
