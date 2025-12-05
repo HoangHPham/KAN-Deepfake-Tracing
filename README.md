@@ -28,7 +28,7 @@
 
 ## Technical Briefing 💡
 
-**Introducing proposed model** - the next generation of speech deepfake source tracing system with interpretability and adaptability.  
+**Introducing proposed model:** Our proposed system, is a next-generation speech deepfake source tracing framework combining countermeasure-based multi-task learning with a Kolmogorov-Arnold Network (KAN) [1]. It uses AASIST-based backbones for audio representation and performs dual source tracing via attack attribute and type classification. The framework emphasizes interpretability through intrinsic metadata integration and extrinsic KAN-based feature importance analysis.  
 
 * **CM_MTL_KAN: A combination of countermeasure based Multi-task Learning and Kolmogorov-Arnold Network**
 
@@ -83,8 +83,8 @@ pip install -r requirements.txt
 
 ### 2. Data preparation 
 
-- Download **ASVspoof 2019 LA dataset** at [ASVspoof2019](https://datashare.ed.ac.uk/handle/10283/3336).
-- Two data protocols, i.e., **ASVspoof2019-attr-2** and **ASVspoof2019-attr-17**, are available at `./data`.
+- Download **ASVspoof 2019 LA dataset** at [ASVspoof2019](https://datashare.ed.ac.uk/handle/10283/3336) [2].
+- Two data protocols, i.e., **ASVspoof2019-attr-2** and **ASVspoof2019-attr-17** [3], are available at `./data`.
 - 🔥 Modify data paths in configurations files:
 
 `./data/ASVspoof2019_LA_cm.yaml`
@@ -306,11 +306,55 @@ Two ablation experiments and a baseline model are also evaluated to present the 
 
 ## Acknowledgements
 Very thanks to authors who have foundations for my implementations:
-1. [Official AASIST by @clovaai](https://github.com/clovaai/aasist)
-2. [Official SSL-AASIST by @TakHemlata](https://github.com/TakHemlata/SSL_Anti-spoofing)
-3. [Official KAN by @KindXiaoming](https://github.com/KindXiaoming/pykan)
+1. [Official KAN by @KindXiaoming](https://github.com/KindXiaoming/pykan)
+2. [Official AASIST by @clovaai](https://github.com/clovaai/aasist)
+3. [Official SSL-AASIST by @TakHemlata](https://github.com/TakHemlata/SSL_Anti-spoofing)
 4. [Baseline source tracing model by @Manasi2001](https://github.com/Manasi2001/Spoofed-Speech-Attribution)
 
+## References
+
+[1] KAN: Kolmogorov Arnold Networks
+```bibtex
+@inproceedings{ICLR2025_afaed896,
+ author = {Liu, Ziming and Wang, Yixuan and Vaidya, Sachin and Ruehle, Fabian and Halverson, James and Soljacic, Marin and Hou, Thomas and Tegmark, Max },
+ booktitle = {International Conference on Representation Learning},
+ editor = {Y. Yue and A. Garg and N. Peng and F. Sha and R. Yu},
+ pages = {70367--70413},
+ title = {KAN: Kolmogorov Arnold Networks},
+ url = {https://proceedings.iclr.cc/paper_files/paper/2025/file/afaed89642ea100935e39d39a4da602c-Paper-Conference.pdf},
+ volume = {2025},
+ year = {2025}
+}
+```
+
+[2] ASVspoof 2019: A large-scale public database of synthesized, converted and replayed speech
+```bibtex
+@article{wang2020asvspoof,
+  title={ASVspoof 2019: A large-scale public database of synthesized, converted and replayed speech},
+  author={Wang, Xin and Yamagishi, Junichi and Todisco, Massimiliano and Delgado, H{\'e}ctor and Nautsch, Andreas and Evans, Nicholas and Sahidullah, Md and Vestman, Ville and Kinnunen, Tomi and Lee, Kong Aik and others},
+  journal={Computer Speech \& Language},
+  volume={64},
+  pages={101114},
+  year={2020},
+  publisher={Elsevier}
+}
+```
+
+[3] Towards explainable spoofed speech attribution and detection: A probabilistic approach for characterizing speech synthesizer components
+```bibtex
+@article{MISHRA2026101840,
+  title = {Towards explainable spoofed speech attribution and detection: A probabilistic approach for characterizing speech synthesizer components},
+  journal = {Computer Speech & Language},
+  volume = {95},
+  pages = {101840},
+  year = {2026},
+  issn = {0885-2308},
+  doi = {https://doi.org/10.1016/j.csl.2025.101840},
+  url = {https://www.sciencedirect.com/science/article/pii/S0885230825000658},
+  author = {Jagabandhu Mishra and Manasi Chhibber and Hye-jin Shim and Tomi H. Kinnunen},
+  keywords = {Explainable probabilistic framework, Probabilistic attribute embeddings, Shapley values, Deepfake},
+}
+```
 
 
 
