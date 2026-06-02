@@ -980,7 +980,7 @@ class MultKAN(nn.Module):
         return complexity.item()
     
     
-    def plot(self, folder="./figures", beta=3, metric='backward', scale=0.5, tick=False, sample=False, in_vars=None, out_vars=None, title=None, varscale=1.0):
+    def plot(self, folder="./kan_figures", beta=3, metric='backward', scale=0.5, tick=False, sample=False, in_vars=None, out_vars=None, title=None, varscale=1.0):
         '''
         plot KAN
         
@@ -1240,6 +1240,638 @@ class MultKAN(nn.Module):
         plt.savefig("plots/model_tree.png")
         plt.show()
         plt.close()
+        
+    def plot2(self, folder="./kan_figures", beta=3, metric='backward', scale=0.5, tick=False,
+              sample=False, in_vars=None, out_vars=None, title=None, varscale=1.0, target_output=None,
+              spline_scale=1.0):
+        '''
+        plot KAN
+
+        Args:
+        -----
+            folder : str
+                the folder to store pngs
+            beta : float
+                positive number. control the transparency of each activation. transparency = tanh(beta*l1).
+            metric : str
+                'forward_n', 'forward_u', or 'backward'
+            scale : float
+                control the size of the diagram
+            tick : bool
+                whether to show tick marks on activation plots
+            sample : bool
+                whether to show scatter points on activation plots
+            in_vars: None or list of str
+                the name(s) of input variables
+            out_vars: None or list of str
+                the name(s) of output variables
+            title: None or str
+                title
+            varscale : float
+                the size of input variable labels
+            target_output : None or int
+                if set, only show connections leading to this output node (0-indexed).
+                activation function plots are enlarged and spread across full width.
+            spline_scale : float
+                multiplier for the spline box size (default 1.0). Increase (e.g. 2.0–4.0)
+                to make activation function boxes larger and easier to read.
+
+        Returns:
+        --------
+            Figure
+        '''
+        global Symbol
+
+        if not self.save_act:
+            print('cannot plot since data are not saved. Set save_act=True first.')
+
+        # forward to obtain activations
+        if self.acts == None:
+            if self.cache_data == None:
+                raise Exception('model hasn\'t seen any data yet.')
+            self.forward(self.cache_data)
+
+        if metric == 'backward':
+            self.attribute()
+
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        depth = len(self.width) - 1
+
+        # -------------------------------------------------------------------------
+        # Helper: back-trace which (layer, i, j) edges lie on any path to target_output
+        # -------------------------------------------------------------------------
+        def get_active_edges(target_j):
+            """Return a set of (layer, i, j) on any path to target_j, or None for all."""
+            if target_j is None:
+                return None
+            active = set()
+            active_next = {target_j}
+            for l in reversed(range(depth)):
+                active_prev = set()
+                n_in = self.width_in[l]
+                for j in active_next:
+                    for i in range(n_in):
+                        active.add((l, i, j))
+                        active_prev.add(i)
+                active_next = active_prev
+            return active
+
+        active_edges = get_active_edges(target_output)
+
+        def is_active(l, i, j):
+            return active_edges is None or (l, i, j) in active_edges
+
+        # -------------------------------------------------------------------------
+        # Save individual spline PNGs (only for active edges)
+        # -------------------------------------------------------------------------
+        for l in range(depth):
+            w_large = 2.0
+            for i in range(self.width_in[l]):
+                for j in range(self.width_out[l + 1]):
+                    if not is_active(l, i, j):
+                        continue
+
+                    rank = torch.argsort(self.acts[l][:, i])
+                    fig, ax = plt.subplots(figsize=(w_large, w_large))
+
+                    numeric_mask = self.act_fun[l].mask[i][j]
+                    if numeric_mask > 0.:
+                        color = "black"
+                        alpha_mask = 1
+                    elif numeric_mask == 0.:
+                        color = "white"
+                        alpha_mask = 0
+
+                    if tick == True:
+                        ax.tick_params(axis="y", direction="in", pad=-22, labelsize=50)
+                        ax.tick_params(axis="x", direction="in", pad=-15, labelsize=50)
+                        x_min, x_max, y_min, y_max = self.get_range(l, i, j, verbose=False)
+                        plt.xticks([x_min, x_max], ['%2.f' % x_min, '%2.f' % x_max])
+                        plt.yticks([y_min, y_max], ['%2.f' % y_min, '%2.f' % y_max])
+                    else:
+                        plt.xticks([])
+                        plt.yticks([])
+
+                    if alpha_mask == 1:
+                        plt.gca().patch.set_edgecolor('black')
+                    else:
+                        plt.gca().patch.set_edgecolor('white')
+                    plt.gca().patch.set_linewidth(1.5)
+
+                    plt.plot(
+                        self.acts[l][:, i][rank].cpu().detach().numpy(),
+                        self.spline_postacts[l][:, j, i][rank].cpu().detach().numpy(),
+                        color=color, lw=5
+                    )
+                    if sample == True:
+                        plt.scatter(
+                            self.acts[l][:, i][rank].cpu().detach().numpy(),
+                            self.spline_postacts[l][:, j, i][rank].cpu().detach().numpy(),
+                            color=color, s=400 * scale ** 2
+                        )
+                    plt.gca().spines[:].set_color(color)
+                    plt.savefig(f'{folder}/sp_{l}_{i}_{j}.png', bbox_inches="tight", dpi=400)
+                    plt.close()
+
+        # -------------------------------------------------------------------------
+        # Compute alpha (transparency) scores
+        # -------------------------------------------------------------------------
+        def score2alpha(score):
+            return np.tanh(beta * score)
+
+        if metric == 'forward_n':
+            scores = self.acts_scale
+        elif metric == 'forward_u':
+            scores = self.edge_actscale
+        elif metric == 'backward':
+            scores = self.edge_scores
+        else:
+            raise Exception(f'metric = \'{metric}\' not recognized')
+
+        alpha = [score2alpha(score.cpu().detach().numpy()) for score in scores]
+
+        # -------------------------------------------------------------------------
+        # Layout constants
+        # -------------------------------------------------------------------------
+        width = np.array(self.width)
+        width_in = np.array(self.width_in)
+        width_out = np.array(self.width_out)
+        A = 1
+        neuron_depth = len(width)
+        min_spacing = A / np.maximum(np.max(width_out), 5)
+        max_neuron = np.max(width_out)
+
+        # FIX: size spline boxes by the number of *active* edges, not all edges
+        if active_edges is not None:
+            active_weight_count = max(len(active_edges), 5)
+        else:
+            active_weight_count = int(np.max(width_in[:-1] * width_out[1:]))
+
+        y1 = 0.4 / np.maximum(active_weight_count, 5) * spline_scale   # half-size of spline box
+        y2 = 0.15 / np.maximum(max_neuron, 5)                          # half-size of sum/mult symbols
+
+        # Expand the vertical lane so enlarged boxes don't overflow into adjacent layers
+        y0 = max(0.2, y1 * 2.5)
+        z0 = max(0.1, y1 * 1.2)
+
+        fig, ax = plt.subplots(figsize=(10 * scale, 30 * scale * (neuron_depth - 1) * (y0 + z0)))
+
+        DC_to_FC  = ax.transData.transform
+        FC_to_NFC = fig.transFigure.inverted().transform
+        DC_to_NFC = lambda x: FC_to_NFC(DC_to_FC(x))
+
+        # -------------------------------------------------------------------------
+        # FIX: remap active edge x-positions to spread evenly across [0, 1]
+        # so that when target_output is set the 50 splines fill the full width
+        # instead of being crammed into 1/n_outputs of it.
+        # -------------------------------------------------------------------------
+        # Build per-layer sorted lists of active (i, j) pairs
+        active_edge_list_by_layer = {}
+        for l in range(depth):
+            if active_edges is None:
+                n     = self.width_in[l]
+                n_nxt = self.width_out[l + 1]
+                pairs = [(i, j) for i in range(n) for j in range(n_nxt)]
+            else:
+                pairs = sorted((i, j) for (ll, i, j) in active_edges if ll == l)
+            active_edge_list_by_layer[l] = pairs
+
+        def get_edge_x(l, i, j):
+            """X-coordinate of spline box for edge (l, i, j)."""
+            pairs = active_edge_list_by_layer[l]
+            if (i, j) not in pairs:
+                return None
+            idx = pairs.index((i, j))
+            M   = len(pairs)
+            return 1 / (2 * M) + idx / M
+
+        def get_node_x(layer, node_idx, node_count):
+            """X-coordinate of a neuron node."""
+            return 1 / (2 * node_count) + node_idx / node_count
+
+        # -------------------------------------------------------------------------
+        # Draw nodes and connection lines
+        # -------------------------------------------------------------------------
+        for l in range(neuron_depth):
+            n = width_in[l]
+
+            # --- Scatter: input nodes at this layer ---
+            for i in range(n):
+                if active_edges is not None:
+                    # active if it has any outgoing active edge (or incoming from previous layer)
+                    out_active = l < neuron_depth - 1 and any(
+                        (l, i, j) in active_edges for j in range(width_out[l + 1])
+                    )
+                    in_active = l > 0 and any(
+                        (l - 1, i2, i) in active_edges for i2 in range(width_in[l - 1])
+                    )
+                    node_color = 'black' if (out_active or in_active) else 'lightgray'
+                else:
+                    node_color = 'black'
+
+                plt.scatter(
+                    get_node_x(l, i, n),
+                    l * (y0 + z0),
+                    s=min_spacing ** 2 * 10000 * scale ** 2,
+                    color=node_color
+                )
+
+            # --- Lines: input node → spline box (lower half) and spline box → output node (upper half) ---
+            if l < neuron_depth - 1:
+                n_next = width_out[l + 1]
+                for i in range(n):
+                    for j in range(n_next):
+                        edge_on      = is_active(l, i, j)
+                        numeric_mask = self.act_fun[l].mask[i][j]
+
+                        if numeric_mask > 0.:
+                            color      = "black" if edge_on else "lightgray"
+                            alpha_mask = 1
+                        elif numeric_mask == 0.:
+                            color      = "white"
+                            alpha_mask = 0
+
+                        line_alpha = min(1., alpha[l][j][i] * alpha_mask + 0.02) if edge_on else 0.05
+
+                        x_edge = get_edge_x(l, i, j)
+                        if x_edge is None:
+                            continue
+
+                        x_i = get_node_x(l, i, n)
+                        x_j = get_node_x(l, j, n_next)
+
+                        # input node  →  bottom of spline box
+                        plt.plot(
+                            [x_i, x_edge],
+                            [l * (y0 + z0), l * (y0 + z0) + y0 / 2 - y1],
+                            color=color, lw=2 * scale, alpha=line_alpha
+                        )
+                        # top of spline box  →  output node
+                        plt.plot(
+                            [x_edge, x_j],
+                            [l * (y0 + z0) + y0 / 2 + y1, l * (y0 + z0) + y0],
+                            color=color, lw=2 * scale, alpha=line_alpha
+                        )
+
+            # --- Lines: pre-mult node → post-mult / next-layer input ---
+            if l < neuron_depth - 1:
+                n_in   = width_out[l + 1]
+                n_out  = width_in[l + 1]
+                mult_id = 0
+                for i in range(n_in):
+                    if i < width[l + 1][0]:
+                        j = i
+                    else:
+                        if i == width[l + 1][0]:
+                            ma = self.mult_arity if isinstance(self.mult_arity, int) \
+                                else self.mult_arity[l + 1][mult_id]
+                            current_mult_arity = ma
+                        if current_mult_arity == 0:
+                            mult_id += 1
+                            ma = self.mult_arity if isinstance(self.mult_arity, int) \
+                                else self.mult_arity[l + 1][mult_id]
+                            current_mult_arity = ma
+                        j = width[l + 1][0] + mult_id
+                        current_mult_arity -= 1
+
+                    edge_on    = active_edges is None or (l == depth - 1 and j == target_output) or l < depth - 1
+                    line_color = 'black' if edge_on else 'lightgray'
+                    line_alpha = 1.0     if edge_on else 0.1
+
+                    plt.plot(
+                        [get_node_x(l, i, n_in), get_node_x(l, j, n_out)],
+                        [l * (y0 + z0) + y0, (l + 1) * (y0 + z0)],
+                        color=line_color, lw=2 * scale, alpha=line_alpha
+                    )
+
+            plt.xlim(0, 1)
+            plt.ylim(-0.1 * (y0 + z0), (neuron_depth - 1 + 0.1) * (y0 + z0))
+
+        plt.axis('off')
+
+        # -------------------------------------------------------------------------
+        # Overlay spline images at remapped positions
+        # -------------------------------------------------------------------------
+        for l in range(neuron_depth - 1):
+            n = width_in[l]
+            for i in range(n):
+                n_next = width_out[l + 1]
+                for j in range(n_next):
+                    if not is_active(l, i, j):
+                        continue
+
+                    x_edge = get_edge_x(l, i, j)
+                    if x_edge is None:
+                        continue
+
+                    im     = plt.imread(f'{folder}/sp_{l}_{i}_{j}.png')
+                    left   = DC_to_NFC([x_edge - y1, 0])[0]
+                    right  = DC_to_NFC([x_edge + y1, 0])[0]
+                    bottom = DC_to_NFC([0, l * (y0 + z0) + y0 / 2 - y1])[1]
+                    up     = DC_to_NFC([0, l * (y0 + z0) + y0 / 2 + y1])[1]
+
+                    newax = fig.add_axes([left, bottom, right - left + 0.0005, up - bottom + 0.0005])
+                    newax.imshow(im, alpha=1)
+                    newax.axis('off')
+
+            # --- Sum symbols ---
+            N = n = width_out[l + 1]
+            for j in range(n):
+                if active_edges is not None and not any(
+                    (l, i, j) in active_edges for i in range(width_in[l])
+                ):
+                    continue
+                path = os.path.dirname(os.path.abspath(__file__)) + "/assets/img/sum_symbol.png"
+                im   = plt.imread(path)
+                id_  = j
+                left   = DC_to_NFC([1 / (2 * N) + id_ / N - y2, 0])[0]
+                right  = DC_to_NFC([1 / (2 * N) + id_ / N + y2, 0])[0]
+                bottom = DC_to_NFC([0, l * (y0 + z0) + y0 - y2])[1]
+                up     = DC_to_NFC([0, l * (y0 + z0) + y0 + y2])[1]
+                newax  = fig.add_axes([left, bottom, right - left, up - bottom])
+                newax.imshow(im)
+                newax.axis('off')
+
+            # --- Mult symbols ---
+            N      = n = width_in[l + 1]
+            n_sum  = width[l + 1][0]
+            n_mult = width[l + 1][1]
+            for j in range(n_mult):
+                id_    = j + n_sum
+                path   = os.path.dirname(os.path.abspath(__file__)) + "/assets/img/mult_symbol.png"
+                im     = plt.imread(path)
+                left   = DC_to_NFC([1 / (2 * N) + id_ / N - y2, 0])[0]
+                right  = DC_to_NFC([1 / (2 * N) + id_ / N + y2, 0])[0]
+                bottom = DC_to_NFC([0, (l + 1) * (y0 + z0) - y2])[1]
+                up     = DC_to_NFC([0, (l + 1) * (y0 + z0) + y2])[1]
+                newax  = fig.add_axes([left, bottom, right - left, up - bottom])
+                newax.imshow(im)
+                newax.axis('off')
+
+        # -------------------------------------------------------------------------
+        # Variable labels
+        # -------------------------------------------------------------------------
+        if in_vars is not None:
+            n = self.width_in[0]
+            for i in range(n):
+                if isinstance(in_vars[i], sympy.Expr):
+                    plt.gcf().get_axes()[0].text(
+                        get_node_x(0, i, n), -0.04,
+                        f'${latex(in_vars[i])}$',
+                        fontsize=40 * scale * varscale,
+                        horizontalalignment='center', verticalalignment='center',
+                        rotation='vertical'
+                    )
+                else:
+                    plt.gcf().get_axes()[0].text(
+                        get_node_x(0, i, n), -0.04,
+                        in_vars[i],
+                        fontsize=40 * scale * varscale,
+                        horizontalalignment='center', verticalalignment='center',
+                        rotation='vertical'
+                    )
+
+        if out_vars is not None:
+            n = self.width_in[-1]
+            for i in range(n):
+                if isinstance(out_vars[i], sympy.Expr):
+                    plt.gcf().get_axes()[0].text(
+                        get_node_x(0, i, n),
+                        (y0 + z0) * (len(self.width) - 1) + 0.01,
+                        f'${latex(out_vars[i])}$',
+                        fontsize=60 * scale * varscale,
+                        horizontalalignment='center', verticalalignment='center'
+                    )
+                else:
+                    plt.gcf().get_axes()[0].text(
+                        get_node_x(0, i, n),
+                        (y0 + z0) * (len(self.width) - 1) + 0.01,
+                        out_vars[i],
+                        fontsize=60 * scale * varscale,
+                        horizontalalignment='center', verticalalignment='center'
+                    )
+
+        if title is not None:
+            plt.gcf().get_axes()[0].text(
+                0.5, (y0 + z0) * (len(self.width) - 1) + 0.3,
+                title,
+                fontsize=40 * scale,
+                horizontalalignment='center', verticalalignment='center'
+            )
+
+        plt.savefig("plots/model_tree.png")
+        plt.show()
+        plt.close()
+        
+        
+    def plot_activation_grid(self, target_output, layer=0, folder="./kan_figures",
+                         in_vars=None, out_vars=None, cell_size=2.0, save_path=None):
+        '''
+        Show activation functions for all active inputs leading to one specific output
+        as a single row of images (one cell per active input).
     
+        Args:
+        -----
+            target_output : int
+                The output node index to inspect (0-indexed).
+            layer : int
+                Which layer's activation functions to show (default 0 = first layer).
+            folder : str
+                Folder where spline PNGs were saved by plot().
+            in_vars : None or list of str
+                Input variable names for subplot titles. If None, uses "x_i".
+            cell_size : float
+                Size in inches of each cell (default 2.0).
+            save_path : None or str
+                If given, saves the figure to this path.
+    
+        Returns:
+        --------
+            Figure
+        '''
+        n_inputs = self.width_in[layer]
+    
+        # Collect only the 7 (or however many) truly active inputs using the mask
+        cells = []
+        for i in range(n_inputs):
+            if self.act_fun[layer].mask[i][target_output] == 0:
+                continue
+            path = f'{folder}/sp_{layer}_{i}_{target_output}.png'
+            if not os.path.exists(path):
+                raise FileNotFoundError(
+                    f"PNG not found: {path}. "
+                    f"Run plot(target_output={target_output}) first."
+                )
+            cells.append((i, path))
+    
+        if len(cells) == 0:
+            raise FileNotFoundError(
+                f"No spline PNGs found for output {target_output} in '{folder}'. "
+                f"Run plot(target_output={target_output}) first."
+            )
+    
+        n = len(cells)
+    
+        fig, axes = plt.subplots(
+            1, n,
+            figsize=(cell_size * n, cell_size),
+            squeeze=False
+        )
+    
+        for idx, (i, path) in enumerate(cells):
+            ax = axes[0][idx]
+            im = plt.imread(path)
+            ax.imshow(im)
+            ax.axis('off')
+    
+            # Label each cell with the input variable name
+            if in_vars is not None and i < len(in_vars):
+                label = f'${sympy.latex(in_vars[i])}$' if isinstance(in_vars[i], sympy.Expr) else str(in_vars[i])
+            else:
+                label = f'$x_{{{i}}}$'
+            ax.set_title(label, fontsize=cell_size * 6, pad=3, fontweight='bold')
+    
+        fig.suptitle(
+            f'{out_vars[target_output]}',
+            fontsize=cell_size * 8, y=1.01,
+            fontweight='bold'
+        )
+        plt.tight_layout()
+    
+        plt.savefig("plots/KAN_activation_shape.png", bbox_inches='tight', dpi=150)
+    
+        plt.show()
+        plt.close()
+        
+        
+    def plot_activation_grid_by_input(self, target_input, layer=0, folder="./kan_figures",
+                                   in_vars=None, out_vars=None, cell_size=2.0, tick=False,
+                                   sample=False, save_path=None):
+        '''
+        Show activation functions for all active outputs connected to one specific input
+        as a single row of images — one cell per active output (typically all 17 outputs).
+    
+        Automatically generates any missing spline PNGs for the target input row,
+        so there is no need to call plot() first for every output.
+    
+        Args:
+        -----
+            target_input : int
+                The input node index to inspect (0-indexed).
+            layer : int
+                Which layer's activation functions to show (default 0 = first layer).
+            folder : str
+                Folder to read/write spline PNGs (same as used in plot()).
+            out_vars : None or list of str
+                Output variable names for subplot titles. If None, uses "y_j".
+            cell_size : float
+                Size in inches of each cell (default 2.0).
+            tick : bool
+                Whether to show axis ticks on each spline plot.
+            sample : bool
+                Whether to show scatter points on each spline plot.
+            save_path : None or str
+                If given, saves the figure to this path.
+    
+        Returns:
+        --------
+            Figure
+        '''
+        if self.acts is None:
+            if self.cache_data is None:
+                raise Exception('model hasn\'t seen any data yet.')
+            self.forward(self.cache_data)
+    
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+    
+        n_outputs = self.width_out[layer + 1]
+        w_large = 2.0
+    
+        # Generate any missing spline PNGs for this input row (all outputs)
+        for j in range(n_outputs):
+            path = f'{folder}/sp_{layer}_{target_input}_{j}.png'
+            if os.path.exists(path):
+                continue  # already saved, skip
+    
+            rank = torch.argsort(self.acts[layer][:, target_input])
+            fig, ax = plt.subplots(figsize=(w_large, w_large))
+    
+            numeric_mask = self.act_fun[layer].mask[target_input][j]
+            color = "black" if numeric_mask > 0. else "white"
+    
+            if tick:
+                ax.tick_params(axis="y", direction="in", pad=-22, labelsize=50)
+                ax.tick_params(axis="x", direction="in", pad=-15, labelsize=50)
+                x_min, x_max, y_min, y_max = self.get_range(layer, target_input, j, verbose=False)
+                plt.xticks([x_min, x_max], ['%2.f' % x_min, '%2.f' % x_max])
+                plt.yticks([y_min, y_max], ['%2.f' % y_min, '%2.f' % y_max])
+            else:
+                plt.xticks([])
+                plt.yticks([])
+    
+            plt.gca().patch.set_edgecolor('black' if numeric_mask > 0. else 'white')
+            plt.gca().patch.set_linewidth(1.5)
+            plt.plot(
+                self.acts[layer][:, target_input][rank].cpu().detach().numpy(),
+                self.spline_postacts[layer][:, j, target_input][rank].cpu().detach().numpy(),
+                color=color, lw=5
+            )
+            if sample:
+                plt.scatter(
+                    self.acts[layer][:, target_input][rank].cpu().detach().numpy(),
+                    self.spline_postacts[layer][:, j, target_input][rank].cpu().detach().numpy(),
+                    color=color, s=400
+                )
+            plt.gca().spines[:].set_color(color)
+            plt.savefig(path, bbox_inches="tight", dpi=400)
+            plt.close()
+    
+        # Collect all active outputs for this input using the mask
+        cells = []
+        for j in range(n_outputs):
+            if self.act_fun[layer].mask[target_input][j] == 0:
+                continue
+            cells.append((j, f'{folder}/sp_{layer}_{target_input}_{j}.png'))
+    
+        if len(cells) == 0:
+            raise ValueError(
+                f"No active connections found from input {target_input} at layer {layer}."
+            )
+    
+        n = len(cells)
+    
+        fig, axes = plt.subplots(
+            1, n,
+            figsize=(cell_size * n, cell_size),
+            squeeze=False
+        )
+    
+        for idx, (j, path) in enumerate(cells):
+            ax = axes[0][idx]
+            im = plt.imread(path)
+            ax.imshow(im)
+            ax.axis('off')
+    
+            if out_vars is not None and j < len(out_vars):
+                label = f'${sympy.latex(out_vars[j])}$' if isinstance(out_vars[j], sympy.Expr) else str(out_vars[j])
+            else:
+                label = f'$y_{{{j}}}$'
+            ax.set_title(label, fontsize=cell_size * 10, pad=3, fontweight='bold')
+    
+        fig.suptitle(
+            f'{in_vars[target_input]}',
+            fontsize=cell_size * 12, y=1.01,
+            fontweight='bold'
+        )
+        plt.tight_layout()
+    
+        plt.savefig("plots/KAN_activation_shape_input.png", bbox_inches='tight', dpi=150)
+        
+        plt.show()
+        plt.close()
 
 KAN = MultKAN
+
